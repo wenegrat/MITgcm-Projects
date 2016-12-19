@@ -1,0 +1,101 @@
+C $Header: /u/gcmpack/MITgcm/pkg/diagnostics/diagnostics_fill_state.F,v 1.30 2006/02/16 23:03:16 molod Exp $
+C $Name:  $
+
+#include "DIAG_OPTIONS.h"
+
+CBOP
+C     !ROUTINE: DIAGNOSTICS_FILL_STATE
+C     !INTERFACE:
+      SUBROUTINE PV_DIAGNOSTICS_FILL( myThid )
+
+C     !DESCRIPTION: \bv
+C     *==========================================================*
+C     | SUBROUTINE DIAGNOSTICS_FILL_STATE
+C     | o Fill-in main code, state-variables diagnostics
+C     *==========================================================*
+C     \ev
+C     ASSUMPTIONS: f-plane, Linear EOS function of T only, 
+C      
+C     !USES:
+      IMPLICIT NONE
+C     == Global variables ===
+#include "SIZE.h"
+#include "EEPARAMS.h"
+#include "PARAMS.h"
+#include "GRID.h"
+#include "DYNVARS.h"
+#include "NH_VARS.h"
+#include "SURFACE.h"
+#include "EOS.h"
+
+C     !INPUT/OUTPUT PARAMETERS:
+C     == Routine arguments ==
+C     myThid     :: my Thread Id number
+      INTEGER myThid 
+
+#ifdef ALLOW_DIAGNOSTICS
+C     !LOCAL VARIABLES:
+C     == Local variables ==
+      LOGICAL  DIAGNOSTICS_IS_ON
+      EXTERNAL DIAGNOSTICS_IS_ON
+      _RL uOut    (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL uDy     (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL uFld    (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL vFld    (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RS hFacZ   (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL pv      (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL vort3   (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL dTdz    (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+      _RL dBdz    (1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr,nSx,nSy)
+
+      INTEGER i,j,K,bi,bj,jj,ii
+      CHARACTER*(MAX_LEN_MBUF) msgBuf
+
+      
+C  Calculate Vertical Component of Rel Vort
+
+      DO bj = myByLo(myThid), myByHi(myThid)
+         DO bi = myBxLo(myThid), myBxHi(myThid)
+            DO K=1,Nr
+C     Make local copies of horizontal flow field
+              DO j=1-OLy,sNy+OLy
+              DO i=1-OLx,sNx+OLx
+                uFld(i,j) = uVel(i,j,K,bi,bj)
+                vFld(i,j) = vVel(i,j,K,bi,bj)
+                hFacZ(i,j) = 0. _d 0
+              ENDDO
+              ENDDO
+
+              CALL MOM_CALC_RELVORT3(bi,bj,K, uFld,vFld, hFacZ,
+     &                    vort3, myThid)
+C              vort3c = 0.25*(vort3(1:Nr-1)
+              pv(:,:,K,bi,bj) = vort3+f0
+            ENDDO
+
+C  Calculate Vertical Derivatives
+            DO j=1-OLy,sNy+OLy
+            DO i=1-OLx,sNx+OLx
+            DO k=1,Nr-1
+               dTdz(i,j,k,bi,bj) = hFacC(i,j,k,bi,bj)*recip_drF(k)*
+     &                            (theta(i,j,k,bi,bj)
+     &                             -theta(i,j,k+1,bi,bj)) 
+            ENDDO
+            ENDDO
+            ENDDO
+C           Convert to buoyancy gradient
+
+C Enddo: Bi, Bj
+        ENDDO
+      ENDDO
+C BT
+      dBdz = gravity*tAlpha*dTdz
+      pv = dBdz*pv
+      CALL DIAGNOSTICS_FILL(pv,'UDIAG2  ',0,Nr,0,1,1,myThid)
+ 
+       
+             
+
+#endif /* ALLOW_DIAGNOSTICS */
+      
+      RETURN 
+      END

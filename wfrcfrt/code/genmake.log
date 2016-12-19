@@ -1,0 +1,137 @@
+
+running: find_possible_optfile()
+  The platform appears to be:  linux_amd64
+  look for possible FORTRAN compilers
+efc -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: efc: command not found
+gfortran -o genmake_hello genmake_hello.f
+ gfortran test successful
+g77 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: g77: command not found
+f77 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: f77: command not found
+pgf77 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: pgf77: command not found
+pgf95 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: pgf95: command not found
+ifc -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: ifc: command not found
+ifort -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: ifort: command not found
+f90 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: f90: command not found
+f95 -o genmake_hello genmake_hello.f
+ f95 test successful
+mpif77 -o genmake_hello genmake_hello.f
+ mpif77 test successful
+mpf77 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: mpf77: command not found
+mpxlf95 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: mpxlf95: command not found
+g95 -o genmake_hello genmake_hello.f
+../../../tools/genmake2: line 553: g95: command not found
+  The possible FORTRAN compilers found in your path are:  gfortran f95 mpif77
+  Setting OPTFILE to: ../../../tools/build_options/linux_amd64_gfortran
+Get compiler version using: mpif77 --version
+/usr/bin/mpif77
+GNU Fortran (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4
+Copyright (C) 2013 Free Software Foundation, Inc.
+
+GNU Fortran comes with NO WARRANTY, to the extent permitted by law.
+You may redistribute copies of GNU Fortran
+under the terms of the GNU General Public License.
+For more information about these matters, see the file named COPYING
+
+<-- compiler version ----
+
+running: look_for_makedepend()
+ --> set MAKEDEPEND=$(TOOLSDIR)/xmakedepend
+
+running: check_HAVE_CLOC()
+ running: get_fortran_c_namemangling()
+ mpicc -O0 -mcmodel=medium -c genmake_test.c
+ mpif77 -fconvert=big-endian -fimplicit-none -mcmodel=medium -c genmake_tcomp.f
+ --> set FC_NAMEMANGLE='#define FC_NAMEMANGLE(X)  X ## _'
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+mpif77 -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+  HELLO WORLD   1461704229.4176309     
+ --> set HAVE_CLOC='t'
+
+running: check_HAVE_SETRLSTK()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+      program hello
+      external setrlstk
+      call setrlstk()
+      end
+mpif77 -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_SETRLSTK='t'
+
+running: check_HAVE_SIGREG()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+      program hello
+      integer anint
+      common /iv/ anint
+      external sigreg
+      call sigreg(anint)
+      end
+mpif77 -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_SIGREG='t'
+
+running: check_HAVE_STAT()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+      program hello
+      integer nbyte
+      call tfsize(nbyte)
+      print *," HELLO WORLD", nbyte
+      end
+mpif77 -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_STAT='t'
+
+running: check_netcdf_libs()
+===  genmake_tnc.F  >>>
+      program fgennc
+#include "netcdf.inc"
+      integer iret, ncid, xid
+      iret = nf_create('genmake_tnc.nc', NF_CLOBBER, ncid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      iret = nf_def_dim(ncid, 'X', 11, xid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      iret = nf_close(ncid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      end
+<<<  genmake_tnc.F  ===
+cat genmake_tnc.F |  cpp -traditional -P -DWORDLENGTH=4 -DNML_TERMINATOR -DALLOW_USE_MPI -DHAVE_SYSTEM -DHAVE_FDATE -DHAVE_ETIME_SBR -DHAVE_CLOC -DHAVE_SETRLSTK -DHAVE_SIGREG -DHAVE_STAT  -I/usr/include/openmpi
+mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -c genmake_tnc.f  \ 
+  &&  mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -o genmake_tnc.o 
+genmake_tnc.o: In function `MAIN__':
+genmake_tnc.f:(.text+0x1e): undefined reference to `nf_create_'
+genmake_tnc.f:(.text+0x4a): undefined reference to `nf_def_dim_'
+genmake_tnc.f:(.text+0x61): undefined reference to `nf_close_'
+genmake_tnc.f:(.text+0xb4): undefined reference to `nf_strerror_'
+genmake_tnc.f:(.text+0x12c): undefined reference to `nf_strerror_'
+genmake_tnc.f:(.text+0x1a1): undefined reference to `nf_strerror_'
+collect2: error: ld returned 1 exit status
+
+==> try again with added '-lnetcdf'
+cat genmake_tnc.F |  cpp -traditional -P -DWORDLENGTH=4 -DNML_TERMINATOR -DALLOW_USE_MPI -DHAVE_SYSTEM -DHAVE_FDATE -DHAVE_ETIME_SBR -DHAVE_CLOC -DHAVE_SETRLSTK -DHAVE_SIGREG -DHAVE_STAT  -I/usr/include/openmpi > genmake_tnc.f \ 
+ &&  mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -c genmake_tnc.f \ 
+ &&  mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -o genmake_tnc genmake_tnc.o  -lnetcdf
+genmake_tnc.o: In function `MAIN__':
+genmake_tnc.f:(.text+0x1e): undefined reference to `nf_create_'
+genmake_tnc.f:(.text+0x4a): undefined reference to `nf_def_dim_'
+genmake_tnc.f:(.text+0x61): undefined reference to `nf_close_'
+genmake_tnc.f:(.text+0xb4): undefined reference to `nf_strerror_'
+genmake_tnc.f:(.text+0x12c): undefined reference to `nf_strerror_'
+genmake_tnc.f:(.text+0x1a1): undefined reference to `nf_strerror_'
+collect2: error: ld returned 1 exit status
+
+==> try again with added '-lnetcdff -lnetcdf'
+cat genmake_tnc.F |  cpp -traditional -P -DWORDLENGTH=4 -DNML_TERMINATOR -DALLOW_USE_MPI -DHAVE_SYSTEM -DHAVE_FDATE -DHAVE_ETIME_SBR -DHAVE_CLOC -DHAVE_SETRLSTK -DHAVE_SIGREG -DHAVE_STAT  -I/usr/include/openmpi > genmake_tnc.f \ 
+ &&  mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -c genmake_tnc.f \ 
+ &&  mpif77  -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -o genmake_tnc genmake_tnc.o  -lnetcdf
+check_netcdf: successful
+ --> set HAVE_NETCDF='t'
+
+running: check_HAVE_FLUSH()
+  check_HAVE_FLUSH: successful
+ --> set HAVE_FLUSH='t'
