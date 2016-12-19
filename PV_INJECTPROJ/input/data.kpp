@@ -3,6 +3,7 @@
 # =====================================================================
  &KPP_PARM01
  KPPwriteState=.FALSE.,
-# minKPPhbl = 10.,
+ minKPPhbl = 12.,
  Ricr = 0.45,
+# BVSQcon=-0.002.,
  &

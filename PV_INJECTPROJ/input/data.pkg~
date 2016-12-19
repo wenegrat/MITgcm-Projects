@@ -2,5 +2,5 @@
  &PACKAGES
   useMNC     = .TRUE.,
   useDiagnostics=.TRUE.,
-  useKPP = .TRUE.,
+  useKPP = .FALSE.,
  &

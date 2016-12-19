@@ -89,7 +89,7 @@
 # nIter0=21,
  startTime=0.,
 # pickupSuff='0000017280',
- endTime=2592000.,
+ endTime=3888000.,
 #- for testing, only run for 12 iterations:
 # nTimeSteps=60,
  deltaT=60.,
