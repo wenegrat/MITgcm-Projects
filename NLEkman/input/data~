@@ -1,0 +1,127 @@
+# ====================
+# | Model parameters |
+# ====================
+#
+# Continuous equation parameters
+ &PARM01
+ tRef=16.5,
+ viscAr=1.E-5,
+# diffKrT=5.E-4,
+  diffK4T=1.E6,
+#- This is the background viscosity used; total=viscah+viscleith
+# viscAh=1.E2,
+# viscA4=1.E2,
+#- This is the background viscosity used on vorticity points
+# viscAhZ=1.E2,
+# viscA4Z=1.E2,
+#- This is the background viscosity used on divergence points
+# viscAhD=1.E2,
+# viscA4D=1.E2,
+#- viscAhD and viscAhZ are set to viscah if they are unset initially
+#
+#- This is a maximum gridscale Reynolds number limiter
+# viscAhReMax=2.,
+#  viscA4ReMax=1.,
+#- This is a minimum autoscaling viscosity
+# viscAhGridMin=.01,
+# viscA4GridMin=.01,
+#- This is the standard Leith Viscosity, prop to grad(curl v_h)
+# viscC2leith = 1.,
+ viscC4leith = 1.,
+# -This is an additional Leith Viscosity, prop to grad(div.v_h)
+#  It traps instabilities that have no signal in grad(curl v_h)
+#viscC2leithD = 1.85,
+ viscC4leithD = 1.,
+# This is harmonic Smagorinsky Coefficient
+# 0.2-0.9 = value from 3-d turbulence theory; Smagorinsky (1993)
+# 2.2-4   = stable oceanic values (Griffies and Hallberg, 2000)
+# 1. smag is approximately the same as 1.85 leith+leithd for this grid spacing
+# viscC2smag = 4,
+  viscC4smag = 3.,
+#- This is the max Viscosity used, be it Smag or Leith, and it scales
+#  with grid size and timestep
+# viscAhGridMax = 1.,
+# viscA4GridMax = 1.,
+#- This uses the full grad(vort) and grad(div)
+# useFullLeith=.TRUE.,
+#- This uses the Strain-Tension form for calculating viscous terms
+#useStrainTensionVisc=.TRUE.,
+ no_slip_sides=.FALSE.,
+ no_slip_bottom=.FALSE.,
+ vectorInvariantMomentum=.FALSE.,
+# selectVortScheme=2,
+# highOrderVorticity=.TRUE.,
+# useAbsVorticity=.TRUE.,
+ ivdc_kappa=0.,
+ implicitDiffusion=.TRUE.,
+ implicitViscosity=.TRUE.,
+ f0=1E-4,
+ beta=0.E-11,
+ useJamartWetPoints=.TRUE.,
+ eosType='LINEAR',
+# Using Temperature as only Active Tracer
+ tAlpha=2.E-4,
+# Using Salinity as Spice
+ sBeta =0.E-4,
+ gravity=9.81,
+ rhoNil=1035.,
+ implicitFreeSurface=.TRUE.,
+ nonlinFreeSurf=0,
+ exactConserv=.TRUE.,
+ staggerTimeStep=.TRUE.,
+ linFSConserveTr=.FALSE.,
+ tempAdvScheme=80,
+ saltAdvScheme=33,
+ readBinaryPrec=64,
+ writeBinaryPrec=64,
+ &
+
+# Elliptic solver parameters
+ &PARM02
+ cg2dMaxIters=1000,
+# cg2dTargetResidual=1.E-11,
+ cg3dMaxIters=4000,
+# cg3dTargetResidual=1.E-9,
+ &
+
+# Time stepping parameters
+ &PARM03
+# nIter0=21,
+ startTime=0.,
+# pickupSuff='0000017280',
+ endTime=3888000.,
+#- for testing, only run for 12 iterations:
+# nTimeSteps=60,
+ deltaT=60.,
+# abEps=0.01,
+#- for testing, reduce amount of output by commenting out output frequencies:
+ pchkptFreq=432000.,
+#taveFreq=14400.,
+dumpFreq=7200.,
+#diagFreq=7200.,
+ monitorSelect=2,
+ monitorFreq=3600.,
+# periodicExternalForcing=.TRUE.,
+# externForcingPeriod=1.,
+# externForcingCycle=1.,
+ pickupStrictlyMatch=.FALSE.,
+ &
+
+# Gridding parameters
+ &PARM04
+ usingCartesianGrid=.TRUE.,
+# delR= 100*3,
+ delRFile='DelR.bin',
+ dxSpacing=500.,
+ dySpacing=500.,
+ &
+
+# Input datasets
+ &PARM05
+ bathyFile='topo_sl.bin',
+ hydrogThetaFile='thetaInitial_6f.bin',
+# hydrogSaltFile='spiceInitial.bin',
+ uVelInitFile='uInitial_6f.bin',
+ surfQfile='Qnet025.forcing',
+ pSurfInitFile='etaInitial_6f.bin',
+ &
