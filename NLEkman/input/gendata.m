@@ -1,9 +1,9 @@
-nx=200;
-ny = 200;
-nz=50;
+nx=400;
+ny = 400;
+nz=100;
 
 
-dxspacing=5000;
+dxspacing=2500;
 dyspacing=dxspacing;
 Lx=dxspacing*nx;
 Ly=dyspacing*ny;
@@ -13,13 +13,13 @@ fprintf(' nx= %i , ny= %i , nz= %i ; dx=%6.1f , dy=%6.1f\n', ...
 
 %-- Params
 g=9.81;
-f0=1e-4;
+f0=2*2*pi./(86400).*sind(30);
 rho=1035;
 day=24*60^2;
 prec='real*8';
 ieee='b';
 
-H=150;            %Max depth
+H=300;            %Max depth
 
 fprintf(' Lx=%6.1f , Ly=%6.1f , H=%6.1f\n',Lx,Ly,H);
 
@@ -89,15 +89,16 @@ fid=fopen('topo_sl.bin','w',ieee); fwrite(fid,hh,prec); fclose(fid);
 %% 
 % Make SSH and U Initial Conditions
 Lscale = 75*1e3; %Gaussian SSH Length Scale;
-SSHa = -.3; % TBD amplitude.
+SSHa = .145; % TBD amplitude.
 center = xc(floor(nx./2));
 % umax = 
 etainit = SSHa.*repmat(exp(-1/2.*((xc-center)./Lscale).^2), [nx 1]).*repmat(exp(-1/2.*((yc-center)./Lscale).^2).', [1, nx]);
 [dEtadx, dEtady] = gradient(etainit, dx(1), dy(1));
 
 uinit = -g./f0.*dEtady;
-umax = max(max(uinit))
+umax = max(max(abs(uinit)))
 rossby = umax./(f0.*Lscale)
+rossbySc = 1.64*rossby
 vinit = g./f0.*dEtadx;
 
 
