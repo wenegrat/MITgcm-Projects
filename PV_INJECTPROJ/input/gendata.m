@@ -1,4 +1,4 @@
-%function geninit()
+%function gendata
 %  This function generates initial condition files for the mitgcm.
 % if init_vel=1, then the front problem is used
 % if init_vel=0, then resting (other than small symmetry-breaking
@@ -6,17 +6,14 @@
 
 %
 % FLAGS FOR IC
-IC = 'FK08'; % Single front in center of domain, following Fox-Kemper et al. 2008a
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% These flags set the initial conditions to use
+%IC = 'FK08'; % Single front in center of domain, following Fox-Kemper et al. 2008a
 % IC = 'UNIF'; % Uniform frontal region
-IC = 'T08';
-% IC = 'T08MOD';
+%IC = 'T08'; % Following Thomas and Ferrari 2008
+IC = 'T08MOD'; % Modified with a tanh vertical decay of front.
 
-% nx=96;
-% ny = 144;
-% nz=100;
-% init_vel=1;
-% dxspacing=250;
-% dyspacing=dxspacing;
+% Size of domain
 nx=150;
 ny = 200;
 nz=50;
@@ -59,14 +56,13 @@ L=yc(end)-yc(1);	% this takes into account the wall of topography!!!
 %-- Grid: z
 dh=H/nz*ones(1,nz);
 zf=-round(cumsum([0 dh])/1)*1;   % Face z points
-%% Uncomment this stuff for stretched grid
+% Uncomment this stuff for stretched grid
 nzs= linspace(-1,0, nz+1);
 thetas = 4;
 C = (1-cosh(thetas.*nzs))./(cosh(thetas)-1) ; 
 hc = 300;
 zf = fliplr(H*(hc*nzs + H*C)./(hc+H));
 dh=-diff(zf);
-
 zc=(zf(1:end-1)+zf(2:end))/2;  % centered z points
 plot(dh, zc, '-x');
 nz=length(dh);
@@ -84,46 +80,33 @@ D=Dml;
 
 y0=yc(round(length(yc)/2));     % centered location of Front
 
-% Ms=(2e-4)^2 ;     %db/dy  2e-4 is about 1 K/50 km
-% Ms = (9*f0).^2;
-% Ms = (8*f0).^2;
-% Ms = (3*f0).^2;
-% Ns=9*Ms^2/f0^2 ;  %db/dz
-% Ns = 32*Ms;
-% Ns = 32*(6*f0).^2;
+% FRONTAL PARAMATERS
 Ns = (64*f0).^2;
-% Ns_ML = 8*Ms;
 Ns_ML =0;
 Pr = nx*dxspacing*f0./sqrt(Ns)
-%%
 
-Lf=2*1e3;          % Half-Width of Front
-Lf = 10000;
+Lf = 10000; % Half-Width of Front
 
-% LSI = 2*Ms*Dml/f0^2*sqrt(1-Ri)
-% deltatheta= Lf*Ms/g/tAlpha;
-% deltatheta = -0.75;
-% deltatheta = -0.5;
-%  deltatheta = -0.25;
-
-% dtdy = deltatheta./Lf;
-% Ms = 9.81.*2e-4.*dtdy;
-% Ms = -(6*f0).^2;
+% HORIZONTAL GRADIENT OPTIONS
+% ==============================================================
+% ==============================================================
+  Ms = -(6*f0).^2; fstring='6f';
 % Ms = -(3*f0).^2;
-Ms = -(1*f0).^2;
-% Ms = -(2*f0).^2;
-% Ms = -(4*f0).^2;
+ Ms = -(1*f0).^2; fstring ='1f';
+ Ms = -(2*f0).^2; fstring = '2f';
+  Ms = -(4*f0).^2; fstring='4f';
 % Ms = -(1.5*f0).^2;
 dtdy = Ms./(9.81*2e-4);
 deltatheta = dtdy.*Lf*2
-MaxgradB = deltatheta*TtoB./(2*Lf)
+MaxgradB = deltatheta*TtoB./(2*Lf) % Consistency check
 
-T0=17;
+T0=15; % Background temperature -not of dynamical signficance
 dthetadz=-Ns/g/tAlpha;
 dthetadz_ML = -Ns_ML/g/tAlpha;
 
 fprintf(' Ms=%15.6e , Ns=%15.6e , T0= %6.3f\n',Ms,Ns,T0);
 fprintf(' deltaRho=%15.6e , dthetadz=%15.6e\n',deltatheta*1035*tAlpha,dthetadz);
+
 %MLI Scales (Fox-Kemper et al. 2008a)
 Us = Ms*Dml./f0;
 Ri = Ns_ML.*f0^2./Ms.^2;
@@ -132,15 +115,12 @@ Ls = 2*pi*Us./f0*sqrt((1+Ri)/(5/2))
 Lsmin = 2*pi*Us./f0*sqrt(2/5) % Minimum length scale of fastest growing MLI
 ts = sqrt(54/4)*sqrt(1+Ri)/f0/3600 % in hours
 
-
-
-%%
 %-- Bathymetry
 % Bathymetry is on Xc, Yc
 hh=ones(size(XB));
-if ~ strcmp(IC, 'T08')
-hh(:,end)=0*hh(:,end);
-end
+% if ~ strcmp(IC, 'T08')
+% hh(:,end)=0*hh(:,end);
+% end
 hh=-H*hh;
 
 figure(1); clf
@@ -168,13 +148,8 @@ figure(2); clf
 % theta=T0+dthetadz*(ZT-ZT(1,1,end))+deltatheta*tanh((YT-y0)/Lf)/2;
 theta = NaN(nx, ny, nz);
 % Impose a strong initial and restoring mixed layer to Dml
-i=1;
-iml=1;
-
 iml = find(ZT(1,1,:) > -Dml, 1, 'last');
-% while ((ZT(1,1,iml)>-Dml)&(iml<length(ZT(1,1,:))))
-%   iml=iml+1;
-% end
+
 switch IC
     case 'FK08'
         theta(:,:,1:iml) = T0+dthetadz_ML*(ZT(:,:,1:iml)-ZT(1,1,iml))+deltatheta*tanh(2*(YT(:,:,1:iml)-y0)/Lf)/2;
@@ -220,24 +195,27 @@ switch IC
         etainit = etainit-etainit(1);
 %         etainit = etainit.*g.*squeeze(dens(:,:,1));%This converts to pressure...But ETAN in diagnostics is actually in m???
      case 'T08MOD' 
-         clear uinit
+        clear uinit
         ystructure = NaN(ny,1);
         ly = ceil(ny/2);
         Ly = (ny)*dyspacing;
         ystructure(1:ly+1) = 0.5.*(1-tanh(yc(1:ly+1)./Lf) + tanh( (yc(1:ly+1) - Ly./2)./Lf));
         ysright = 0.5.*(tanh( (yc(ly+1:end)-Ly./2)./Lf) - tanh( (yc(ly+1:end)-Ly)./Lf) - 1);
         ystructure(ly+1:end) = ysright-(ysright(1)-ystructure(ly+1));
+        ystructure = ystructure - 0.5;
         ystructfull = repmat(permute(repmat(ystructure, [1 nx]), [2 1]), [1 1 nz]);
-
-%         ystructfull(:,:,iml+1:end) = 0;
-        vstruct = (tanh((ZT+Dml+75)./20)+1)/2;
+        dv = 0.15*Dml;
+        vstruct = (tanh((ZT+1.5*Dml)./dv)+1)/2;
 %         vstruct = exp( (ZT+Dml)/30);
 %         vstruct(ZT>-Dml) = 1;
+%         vstruct = 1;
         ystructfull = ystructfull.*vstruct;
         theta(:,:,1:iml) = deltatheta.*ystructfull(:,:,1:iml) + dthetadz_ML.*(ZT(:,:,1:iml)-ZT(1,1,iml)) + T0;
-%         minT = min(min(min(theta(:,:,iml))));
+%         minT = min(min(min(theta(:,:,1:iml))));
         minT = T0;
+        
         theta(:,:,iml+1:end) = deltatheta.*ystructfull(:,:,iml+1:end) + dthetadz.*(ZT(:,:,iml+1:end)-ZT(1,1,iml+1)) + minT;
+        theta(:,:,end-1) = theta(:,:,end); %N^2 at bottom should be zero for zero heat flux.
         meanGradB = nanmean(gradient(squeeze(theta(1,:,1).*TtoB), dyspacing));
         ystrucyfull = gradient(ystructfull, dyspacing);
         
@@ -252,15 +230,9 @@ switch IC
         etainit = -densvi./squeeze(dens(:,:,1));
       
         etainit = etainit-etainit(1);
-%         etainit = etainit.*g.*squeeze(dens(:,:,1));%This converts to pressure...But ETAN in diagnostics is actually in m???
 end
 
 fprintf('      Z    , Theta: j=1 ,  j=end\n');
-% fprintf(' %10.4f %10.4f %10.4f\n', ...
-% [ZT(1,1,1) theta(1,1,1) theta(1,end,1) ; ...
-%  ZT(1,1,i) theta(1,1,i) theta(1,end,i);  ...
-%  ZT(1,1,end) theta(1,1,end) theta(1,end,end)]' ...
-% );
 
 subplot(3,2,1)
 [h,c]=contourf(squeeze(YT(1,:,:))/1e3,squeeze(ZT(1,:,:)),squeeze(theta(1,:,:)), 20);
@@ -284,28 +256,20 @@ xlabel('y (km)');ylabel('z (m)')
 axis([(yc(round(length(yc)/2))-1.5*Lf)/1e3 (yc(round(length(yc)/2))+1.5*Lf)/1e3 -Dml 0])
 
 
-
 %Spice
-
-x1=xc(round(length(xc)/4));     % centered location of Front #1
-x2=xc(round(3*length(xc)/4));     % centered location of Front #2
-spice=T0+dthetadz*(ZT-ZT(1,1,end))+deltatheta*(tanh((XT-x1)/Lf)-tanh((XT-x2)/Lf)-1)/2;
-
-i=1;
-while (i<iml)
-  spice(:,:,i)=spice(:,:,iml);
-  i=i+1;
-end
+subplot(3,2,5)
+% dens=theta*rho*tAlpha+rho;
+[h,c]=contour(squeeze(YT(1,:,1:end-1))/1e3,squeeze(ZT(1,:,1:end-1)),squeeze(diff(dens(1,:,:), 1, 3)));
+title('Density')
+xlabel('y (km)');ylabel('z (m)')
+% axis([(yc(round(length(yc)/2))-1.5*Lf)/1e3 (yc(round(length(yc)/2))+1.5*Lf)/1e3 -Dml 0])
+set(gca, 'clim', [-1 1].*0.03);
+colorbar
 
 subplot(3,2,4)
 [h,c]=contour(squeeze(YT(1,:,:))/1e3,squeeze(ZT(1,:,:)),squeeze(dens(1,:,:)));
 title('Density')
 xlabel('y (km)');ylabel('z (m)')
-
-subplot(3,2,5)
-[h,c]=contourf(squeeze(XT(:,1,:))/1e3,squeeze(ZT(:,1,:)),squeeze(spice(:,1,:)));
-title('Spice')
-xlabel('x (km)');ylabel('z (m)')
 
 subplot(3,2,6)
 plot(YB(1,:)/1e3,hh(1,:))
@@ -322,9 +286,9 @@ for i=1:length(theta(1,1,:))
 end
 
 %%%%%% NAME FILES HERE
-fid=fopen('thetaInitial_1f.bin','w',ieee); fwrite(fid,theta,prec); fclose(fid);
-fid=fopen('uInitial_1f.bin','w',ieee); fwrite(fid,uinit,prec); fclose(fid);
-fid=fopen('etaInitial_1f.bin','w',ieee); fwrite(fid,etainit,prec); fclose(fid);
+fid=fopen(strcat('thetaInitial_', fstring, '.bin'),'w',ieee); fwrite(fid,theta,prec); fclose(fid);
+fid=fopen(strcat('uInitial_',fstring,'.bin'),'w',ieee); fwrite(fid,uinit,prec); fclose(fid);
+fid=fopen(strcat('etaInitial_',fstring,'.bin'),'w',ieee); fwrite(fid,etainit,prec); fclose(fid);
 
 
 % Generate forcing
