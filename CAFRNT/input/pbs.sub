@@ -1,0 +1,21 @@
+#!/bin/tcsh
+#PBS -N CAFRNT
+#PBS -l nodes=4:ppn=24
+#PBS -q thomas
+#PBS -V
+#PBS -m e
+#PBS -M jacob13@stanford.edu
+#PBS -e /scratch/jacob13/CAFRNT/pbs_pvinject.err
+#PBS -o /scratch/jacob13/CAFRNT/pbs_pvinject.out
+#
+cd $PBS_O_WORKDIR
+
+#
+mpirun -np 96 -machinefile $PBS_NODEFILE ./mitgcmuv
+
+~/MITgcm/utils/python/MITgcmutils/scripts/gluemncbig -o diag.nc dirDiag*.nc
+~/MITgcm/utils/python/MITgcmutils/scripts/gluemncbig -o etan.nc etanD*.nc
+~/MITgcm/utils/python/MITgcmutils/scripts/gluemncbig -o state.nc state*.nc
+#~/MITgcm/utils/python/MITgcmutils/scripts/gluemncbig -o kppdiags.nc kppDiag*.nc
+#~/MITgcm/utils/python/MITgcmutils/scripts/gluemncbig -o extra.nc extraDiag*.nc
+
