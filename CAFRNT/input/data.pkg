@@ -1,0 +1,6 @@
+# Packages
+ &PACKAGES
+  useMNC     = .TRUE.,
+  useDiagnostics=.TRUE.,
+  useKPP = .TRUE.,
+ &
