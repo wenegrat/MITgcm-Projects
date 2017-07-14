@@ -82,7 +82,7 @@ y0=yc(round(length(yc)/2));     % centered location of Front
 
 % FRONTAL PARAMATERS
 Ns = (64*f0).^2;
-Ns_ML =0;
+Ns_ML =(4*f0).^2;
 Pr = nx*dxspacing*f0./sqrt(Ns)
 
 Lf = 10000; % Half-Width of Front
@@ -94,7 +94,7 @@ Lf = 10000; % Half-Width of Front
 % Ms = -(3*f0).^2;
  Ms = -(1*f0).^2; fstring ='1f';
  Ms = -(2*f0).^2; fstring = '2f';
-  Ms = -(4*f0).^2; fstring='4f';
+%   Ms = -(4*f0).^2; fstring='4f';
 % Ms = -(1.5*f0).^2;
 dtdy = Ms./(9.81*2e-4);
 deltatheta = dtdy.*Lf*2
@@ -323,7 +323,7 @@ disp(['B0/<w''b''>:  ', num2str(B0*f0./(0.06*MaxgradB.^2.*Dml.^2))]);
 disp(['Jf/Jd:        ', num2str(0.06.*(B0*Dml).^(1/3).*MaxgradB.^2.*Dml/(f0.^2.*B0))]);
 disp(['Jf/Jd^E:      ', num2str((B0*Dml).^(1/3)./(f0*Dml))]);
 
-%%
+%% CURRENT LW ONLY
 % Make time varying Q
 times = 1:121;
 Qinit = 100;
@@ -332,7 +332,7 @@ amp = 225*2*pi./365; %Linearization of seasonal cycle from Kelly Dong 2013.
 % plot(times, Qinit-amp*times)
 
 Qperiodic = NaN(121,1);
-ttime= 4;
+ttime= 5;
 Qperiodic(1:ttime) = Qinit;
 Qperiodic(ttime+1:end) = Qinit - amp*(times(ttime+1:end)-times(ttime));
 Qperiodic(end) = Qinit; %need this because t=0 interpolates between end and first.
@@ -340,3 +340,59 @@ Qperiodic(end) = Qinit; %need this because t=0 interpolates between end and firs
 [nx, ny] = size(XB);
 QP = permute(repmat(Qperiodic, [1 nx ny]), [2 3 1]);
 fid=fopen('QPeriodic.forcing','w',ieee); fwrite(fid,QP,prec); fclose(fid);
+
+%% NEW INCLUDING SW
+
+times = 1:121;
+Qinit =100;
+amp = 300/100; %Linearization of seasonal cycle from Kelly Dong 2013.
+
+% plot(times, Qinit-amp*times)
+
+Qperiodic = NaN(121,1);
+ttime= 1;
+Qperiodic(1:ttime) = Qinit;
+Qperiodic(ttime+1:end) = Qinit - amp*(times(ttime+1:end)-times(ttime));
+Qperiodic(end) = Qinit; %need this because t=0 interpolates between end and first.
+% plot(times, Qperiodic);
+
+QP = permute(repmat(Qperiodic, [1 nx ny]), [2 3 1]);
+fid=fopen('QPeriodic.forcing','w',ieee); fwrite(fid,QP,prec); fclose(fid);
+
+QC = -50.*ones(size(QP));
+fid=fopen('Qconstant.forcing','w',ieee); fwrite(fid,QC,prec); fclose(fid);
+
+Qsw = -120;
+amp = -200./100
+QSWP = (Qsw + amp*(times(1:end))).';
+QSWP(end) = QSWP(1);
+QSWP = permute(repmat(QSWP, [1 nx ny]), [2 3 1]);
+
+fid=fopen('QSW.forcing','w',ieee); fwrite(fid,QSWP,prec); fclose(fid);
+
+plot(squeeze(QP(1,1,:)-QSWP(1,1,:)));
+hold on
+plot(squeeze(QSWP(1,1,:)));
+plot(squeeze(QP(1,1,:)), 'LineWidth', 2);
+hold off
+
+
+
+%%
+cl = [-1.5 1.5];
+figure
+contour(yc./1000, zc, squeeze(theta(1,:,:)).',10,'k');
+hold on
+contour(yc./1000, zc, squeeze(uinit(1,:,:)./(abs(Us))).',12, 'LineWidth', 2);
+hold off
+set(gca, 'clim', cl);
+cb = colorbar;
+set(get(cb, 'ylabel'), 'String', '$\frac{u_o}{U}$','Rotation', 0, 'Interpreter', 'Latex', 'FontSize', 24)
+set(cb, 'Ticks', cl(1):0.5:cl(end))
+hold on
+plot(yc(1)./1000.*ones(size(zc)), zc, '>', 'MarkerSize', 4, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'k')
+hold off
+xlabel('y (km)');
+ylabel('z (m)');
+set(gca, 'FontSize', 16);
+set(gcf, 'Color', 'w', 'Position', [ 675   473   748   501]);
